@@ -1,29 +1,25 @@
-let express = require('express');
-const app = express();
+const express = require('express')
+const cors = require('cors')
+const { sequelize } = require('./models')
+const config = require('./config/config')
 
-app.get('/status', (req, res) => {
-    res.send('Hello Node.js Server!')
-});
+const app = express()
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(cors())
+// กำหนดให้ folder 'public' เป็น static resource ที่เข้าถึงได้ผ่าน path '/assets'
+app.use('/assets', express.static('public'))
 
-app.get('/hello/:person', function (req, res) {
-    console.log('hello - ' + req.params.person)
-    res.send('say hello with ' + req.params.person)
-});
+require('./userPassport')
+// --- Routes Section ---
+require('./routes')(app)
 
-// get user by id
-app.get('/user/:userId', function (req, res) {
-    res.send('ดูข้อมูลผู้ใช้งาน')
-})
-// get all user
-app.get('/users', function (req, res) {
-    res.send('เรียกข้อมูลผู้ใช้งาน')
-})
-// get all user
-app.get('/users', function (req, res) {
-    res.send('เรียกข้อมูลผู้ใช้งานทั้งหมด')
-})
-let port = process.env.PORT || 8081;
+// --- Server Startup Section ---
+const port = config.port
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+sequelize.sync({ force: false })
+    .then(() => {
+        app.listen(config.port, '0.0.0.0', () => {
+            console.log('Server running on port ' + port)
+        })
+    })
